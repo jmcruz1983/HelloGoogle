@@ -1,0 +1,76 @@
+<project name="bet" basedir="." default="run-tests">
+    <property name="chrome.driver.version" value="2.33"/>
+    <property name="mozilla.driver.version" value="0.19.0"/>
+    <property name="sources" value="src"/>
+    <property name="bin.drivers" value="bins/drivers"/>
+    <property name="down.drivers" value="downloads/drivers"/>
+
+    <target name="make-dirs" depends="clean-drivers">
+        <mkdir dir="${down.drivers}"/>
+        <mkdir dir="${bin.drivers}"/>
+    </target>
+
+    <target name="download" depends="make-dirs">
+        <get src="https://chromedriver.storage.googleapis.com/${chrome.driver.version}/chromedriver_mac64.zip"
+             dest="${down.drivers}/chromedriver.zip"/>
+        <get src="https://github.com/mozilla/geckodriver/releases/download/v${mozilla.driver.version}/geckodriver-v${mozilla.driver.version}-macos.tar.gz"
+             dest="${down.drivers}/mozilla.tar.gz"/>
+    </target>
+
+    <target name="extract-zip" depends="download">
+        <unzip dest="${bin.drivers}">
+            <fileset dir="${down.drivers}">
+                <include name="**/*.zip"/>
+            </fileset>
+        </unzip>
+    </target>
+
+    <target name="extract-tar" depends="download">
+        <gunzip dest="${down.drivers}">
+            <fileset dir="${down.drivers}">
+                <include name="**/*.tar.gz"/>
+            </fileset>
+        </gunzip>
+        <untar dest="${bin.drivers}">
+            <fileset dir="${down.drivers}">
+                <include name="**/*.tar"/>
+            </fileset>
+        </untar>
+    </target>
+
+    <target name="extract" depends="extract-zip, extract-tar"/>
+
+    <target name="permissions" depends="extract">
+        <chmod perm="+x">
+            <fileset dir="${bin.drivers}">
+                <include name="**/chromedriver"/>
+                <include name="**/geckodriver"/>
+            </fileset>
+        </chmod>
+    </target>
+
+    <target name="chrome" depends="permissions">
+        <exec executable="python">
+            <arg value="${sources}/HelloGoogle.py"/>
+            <arg value="--verbose"/>
+            <arg value="--chrome"/>
+            <arg value="--path"/>
+            <arg value="${bin.drivers}"/>
+        </exec>
+    </target>
+
+        <target name="firefox" depends="permissions">
+        <exec executable="python">
+            <arg value="${sources}/HelloGoogle.py"/>
+            <arg value="--verbose"/>
+            <arg value="--firefox"/>
+            <arg value="--path"/>
+            <arg value="${bin.drivers}"/>
+        </exec>
+    </target>
+
+    <target name="clean-drivers">
+        <delete dir="${down.drivers}"/>
+        <delete dir="${bins.drivers}"/>
+    </target>
+</project>
